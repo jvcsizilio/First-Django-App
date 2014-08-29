@@ -3,19 +3,30 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from polls.models import Choice, Poll
 from django.views import generic
+from django.utils import timezone
 
 class IndexView(generic.ListView):
     template_name = 'polls/index.html'
     context_object_name = 'latest_poll_list'
 
     def get_queryset(self):
-        """Return the last five published polls."""
-        return Poll.objects.order_by('-pub_date')[:5]
+        """
+		Return the last five published polls (not including those set to be
+		published in the future).
+	    """
+	
+	return Poll.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')[:5]
 
 
 class DetailView(generic.DetailView):
     model = Poll
     template_name = 'polls/detail.html'
+
+    def get_queryset(self):
+        """
+        Excludes any polls that aren't published yet.
+        """
+        return Poll.objects.filter(pub_date__lte=timezone.now())
 
 
 class ResultsView(generic.DetailView):
